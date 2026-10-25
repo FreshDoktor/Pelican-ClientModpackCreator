@@ -26,6 +26,14 @@ A plugin for the [Pelican Panel](https://pelican.dev) that builds a **client mod
 
 Copy the plugin into the `plugins` folder of your panel, the folder has to be named like the plugin id (`minecraft-client-modpack`), or import `minecraft-client-modpack.zip` in the admin area under _Plugins_. Then install and enable it there. Installing creates the table `minecraft_client_modpacks`.
 
+**Restart the queue worker** afterwards, and after every update of the plugin. The worker is a long-running process that only knows the code it was started with, until then builds stay at _Waiting for the queue…_ or fail:
+
+```bash
+php artisan queue:restart
+```
+
+Run it in the panel folder (e.g. `/var/www/pelican`). The worker stops after its current job and is started again by its service (`pelican-queue` with systemd, or supervisor). If it doesn't come back on its own, restart the service, e.g. `systemctl restart pelican-queue`.
+
 ## Usage
 
 1. Open _Client Modpack_ in the server menu, or click _Build client modpack_ on the mods page of minecraft-modrinth.
