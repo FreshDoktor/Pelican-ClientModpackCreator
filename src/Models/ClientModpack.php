@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * panel's local disk, see ClientModpackService.
  *
  * @phpstan-type ExtraMod array{project_id: string, slug: string, title: string, icon_url: ?string, version_id: ?string, version_number: ?string}
- * @phpstan-type ContentRow array{key: string, source: string, filename: string, title: string, icon_url: ?string, project_id: ?string, project_slug: ?string, version_number: ?string, rule_key: ?string, decision: string, reason: string, delivery: ?string, size: ?int}
+ * @phpstan-type ContentRow array{key: string, source: string, filename: string, title: string, icon_url: ?string, project_id: ?string, project_slug: ?string, version_number: ?string, rule_key: ?string, decision: string, reason: string, delivery: ?string, size: ?int, required_by: ?string}
  *
  * @property int $id
  * @property int $server_id
