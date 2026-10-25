@@ -46,6 +46,8 @@ trait BuildsClientModpack
                 $this->service()->find($this->getServer())?->isBuilt() ?? false => trans('minecraft-client-modpack::strings.actions.rebuild'),
                 default => trans('minecraft-client-modpack::strings.actions.build'),
             })
+            // Pelican shows actions as icon buttons for users who prefer those, then only the tooltip names it.
+            ->tooltip(fn (Action $action) => $action->getLabel())
             ->icon(fn () => $this->isBuilding() ? 'tabler-loader-2' : 'tabler-package-export')
             ->disabled(fn () => $this->isBuilding())
             ->visible(fn () => $this->userCan('file.read-content'))
@@ -88,6 +90,8 @@ trait BuildsClientModpack
                     ->actions($linkToPage ? [
                         Action::make('open')
                             ->label(trans('minecraft-client-modpack::strings.actions.open'))
+                            // A link, Pelican would make it an icon button without an icon otherwise.
+                            ->link()
                             ->url(ClientModpackPage::getUrl(tenant: $server)),
                     ] : [])
                     ->send();
@@ -144,6 +148,7 @@ trait BuildsClientModpack
             ->actions($linkToPage ? [
                 Action::make('open')
                     ->label(trans('minecraft-client-modpack::strings.actions.open'))
+                    ->link()
                     ->url(ClientModpackPage::getUrl(tenant: $this->getServer())),
             ] : [])
             ->send();

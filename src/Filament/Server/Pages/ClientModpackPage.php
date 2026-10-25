@@ -600,6 +600,8 @@ class ClientModpackPage extends Page implements HasTable
     {
         return Action::make("rule_$name")
             ->label(trans("minecraft-client-modpack::strings.mods.actions.$name"))
+            // Pelican turns every action into an icon button for users who prefer those, a menu entry needs its label.
+            ->grouped()
             ->icon($icon)
             ->color($color)
             ->visible(fn (array $record) => $record['rule'] !== $rule)
@@ -632,6 +634,7 @@ class ClientModpackPage extends Page implements HasTable
     {
         return Action::make('add_mod')
             ->label(trans('minecraft-client-modpack::strings.mods.actions.add'))
+            ->tooltip(trans('minecraft-client-modpack::strings.mods.actions.add'))
             ->icon('tabler-plus')
             ->visible(fn () => $this->userCan('file.update'))
             ->modalHeading(trans('minecraft-client-modpack::strings.mods.add.heading'))
@@ -762,12 +765,15 @@ class ClientModpackPage extends Page implements HasTable
         return [
             Action::make('download')
                 ->label(trans('minecraft-client-modpack::strings.actions.download'))
+                // Shown as an icon only for users who prefer icon buttons.
+                ->tooltip(trans('minecraft-client-modpack::strings.actions.download'))
                 ->icon('tabler-download')
                 ->color('gray')
                 ->visible(fn () => $this->isBuilt())
                 ->url(fn () => $this->getPack() ? $this->service()->downloadUrl($this->getPack()) : null, true),
             Action::make('cancel')
                 ->label(trans('minecraft-client-modpack::strings.actions.cancel'))
+                ->tooltip(trans('minecraft-client-modpack::strings.actions.cancel'))
                 ->icon('tabler-player-stop')
                 ->color('danger')
                 ->visible(fn () => $this->isBuilding() && $this->userCan('file.read-content'))
@@ -800,6 +806,7 @@ class ClientModpackPage extends Page implements HasTable
     {
         return Action::make('settings')
             ->label(trans('minecraft-client-modpack::strings.actions.settings'))
+            ->tooltip(trans('minecraft-client-modpack::strings.actions.settings'))
             ->icon('tabler-settings')
             ->color('gray')
             ->visible(fn () => $this->userCan('file.update'))
@@ -923,6 +930,8 @@ class ClientModpackPage extends Page implements HasTable
     {
         return Action::make('reset_link')
             ->label(trans('minecraft-client-modpack::strings.actions.reset_link'))
+            // A menu entry, see ruleAction().
+            ->grouped()
             ->icon('tabler-link-off')
             ->visible(fn () => $this->isBuilt() && $this->userCan('file.update'))
             ->requiresConfirmation()
@@ -952,6 +961,8 @@ class ClientModpackPage extends Page implements HasTable
     {
         return Action::make('delete')
             ->label(trans('minecraft-client-modpack::strings.actions.delete'))
+            // A menu entry, see ruleAction().
+            ->grouped()
             ->icon('tabler-trash')
             ->color('danger')
             ->visible(fn () => $this->getPack() !== null && $this->userCan('file.delete'))
