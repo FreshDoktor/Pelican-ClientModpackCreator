@@ -31,7 +31,8 @@ trait BuildsClientModpack
         return user()?->can($permission, $this->getServer()) ?? false;
     }
 
-    protected function isBuilding(): bool
+    /** Public, the button's view asks it. */
+    public function isBuilding(): bool
     {
         return $this->service()->isBuilding($this->getServer());
     }

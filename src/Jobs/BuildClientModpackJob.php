@@ -477,10 +477,24 @@ class BuildClientModpackJob implements ShouldQueue
             $knownProjects[$item['project_id']] = true;
 
             try {
-                $project = $modrinth->getProjects([$item['project_id']])[$item['project_id']] ?? null;
+                // Modrinth answers by id, also when asked by slug.
+                $project = collect($modrinth->getProjects([$item['project_id']]))
+                    ->first(fn (array $project) => $project['id'] === $item['project_id'] || $project['slug'] === $item['project_id']);
                 $version = null;
 
+                // Asked by slug for a project that is in already.
+                if ($project !== null && $project['id'] !== $item['project_id'] && isset($knownProjects[$project['id']])) {
+                    if ($item['source'] === self::SOURCE_EXTRA) {
+                        $rows[] = $this->extraRow($item, $project, null, ModClassifier::EXCLUDED, 'already_included');
+                    }
+
+                    continue;
+                }
+
                 if ($project !== null) {
+                    $knownProjects[$project['id']] = true;
+
+
                     $version = $item['version_id'] !== null
                         ? $modrinth->getVersion($item['version_id'])
                         : $modrinth->pickVersion($modrinth->getCompatibleVersions($project['id'], $loaders, $minecraftVersion));

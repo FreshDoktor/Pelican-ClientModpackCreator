@@ -226,7 +226,8 @@ class ClientModpackService
      */
     public function downloadFileName(string $name, string $version): string
     {
-        $base = trim(preg_replace('/[^A-Za-z0-9._+-]+/', '-', Str::ascii("$name-$version")) ?? '', '-.');
+        $base = preg_replace('/[^A-Za-z0-9._+-]+/', '-', Str::ascii("$name-$version")) ?? '';
+        $base = trim(preg_replace('/-{2,}/', '-', $base) ?? $base, '-.');
 
         return mb_substr($base !== '' ? $base : 'modpack', 0, 150).'.mrpack';
     }
