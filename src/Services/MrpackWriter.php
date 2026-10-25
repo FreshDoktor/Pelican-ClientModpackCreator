@@ -87,7 +87,7 @@ class MrpackWriter
             foreach ($overrides as $path => $file) {
                 $entry = self::OVERRIDES_FOLDER.'/'.static::normalisePath($path);
 
-                if (!is_file($file) || !$zip->addFile($file, $entry)) {
+                if (!$zip->addFile($file, $entry)) {
                     throw new RuntimeException("Could not add $entry");
                 }
 
@@ -97,15 +97,15 @@ class MrpackWriter
                 }
             }
         } catch (\Throwable $exception) {
+            // Without any entry libzip doesn't write the archive at all, so nothing is left behind.
+            $zip->unchangeAll();
             $zip->close();
-            @unlink($destination);
 
             throw $exception;
         }
 
+        // libzip writes to a temporary file and only renames it on success.
         if (!$zip->close()) {
-            @unlink($destination);
-
             throw new RuntimeException("Could not write $destination");
         }
     }

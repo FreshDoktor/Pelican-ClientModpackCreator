@@ -6,6 +6,7 @@ use App\Models\Server;
 use App\Repositories\Daemon\DaemonFileRepository;
 use Exception;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Reads the files of a server through the daemon.
@@ -100,7 +101,9 @@ class ServerFilesService
     }
 
     /**
-     * Copy a file of the server to a local file.
+     * Copy a file of the server to the panel's local disk.
+     *
+     * @param  string  $destination  path on the local disk
      *
      * @throws Exception
      */
@@ -112,13 +115,7 @@ class ServerFilesService
             throw new Exception("$path is larger than $maxBytes bytes");
         }
 
-        $directory = dirname($destination);
-
-        if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
-            throw new Exception("Could not create $directory");
-        }
-
-        if (file_put_contents($destination, $contents) !== strlen($contents)) {
+        if (!Storage::disk('local')->put($destination, $contents)) {
             throw new Exception("Could not write $destination");
         }
     }

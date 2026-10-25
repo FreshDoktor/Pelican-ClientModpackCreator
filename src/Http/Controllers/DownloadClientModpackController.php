@@ -18,11 +18,9 @@ class DownloadClientModpackController
 
         abort_if($pack === null || !$pack->isBuilt(), 404);
 
-        $path = $service->absolutePath($pack);
+        abort_unless($service->disk()->exists($service->filePath($pack->server, (string) $pack->file_token)), 404);
 
-        abort_unless($path !== null && is_file($path), 404);
-
-        return response()->download($path, $pack->file_name ?? 'modpack.mrpack', [
+        return response()->download((string) $service->absolutePath($pack), $pack->file_name ?? 'modpack.mrpack', [
             'Content-Type' => 'application/x-modrinth-modpack+zip',
             // The link stays the same across builds, a cache must never hand out an old build.
             'Cache-Control' => 'no-cache',

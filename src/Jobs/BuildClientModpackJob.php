@@ -277,7 +277,7 @@ class BuildClientModpackJob implements ShouldQueue
                     $this->warn('embed_limit', ['file' => $name, 'max' => $service->formatBytes($service->maxEmbeddedBytes())]);
                 } else {
                     try {
-                        $overrides[ClientModpackService::MODS_FOLDER.'/'.$name] = $this->localJar($server, $service, $files, $name);
+                        $overrides[ClientModpackService::MODS_FOLDER.'/'.$name] = $service->disk()->path($this->localJar($server, $service, $files, $name));
                         $embeddedBytes += $jar['size'];
                         $delivery = self::DELIVERY_EMBEDDED;
                     } catch (Throwable $exception) {
@@ -329,13 +329,13 @@ class BuildClientModpackJob implements ShouldQueue
 
         $index = $writer->index($name, $versionId, $pack->summary, $indexFiles, $minecraftVersion, $loader, $loaderVersion);
 
-        $tempFile = $service->disk()->path($this->tempDirectory.'/pack.mrpack');
-        $writer->write($tempFile, $index, $overrides);
+        $tempFile = $this->tempDirectory.'/pack.mrpack';
+        $writer->write($service->disk()->path($tempFile), $index, $overrides);
 
-        $sha1 = sha1_file($tempFile);
-        $size = filesize($tempFile);
+        $sha1 = $service->disk()->checksum($tempFile, ['checksum_algo' => 'sha1']);
+        $size = $service->disk()->size($tempFile);
 
-        if ($sha1 === false || $size === false) {
+        if (!is_string($sha1) || $sha1 === '' || $size <= 0) {
             throw new ClientModpackException(trans('minecraft-client-modpack::strings.errors.store_failed'));
         }
 
@@ -394,9 +394,14 @@ class BuildClientModpackJob implements ShouldQueue
             } else {
                 try {
                     $path = $this->localJar($server, $service, $files, $name);
+                    $sha1 = $service->disk()->checksum($path, ['checksum_algo' => 'sha1']);
 
-                    $entry['sha1'] = strtolower((string) sha1_file($path));
-                    $entry['jar'] = $parser->parseFile($path, $name);
+                    if (!is_string($sha1) || $sha1 === '') {
+                        throw new ClientModpackException("Could not hash $path");
+                    }
+
+                    $entry['sha1'] = strtolower($sha1);
+                    $entry['jar'] = $parser->parseFile($service->disk()->path($path), $name);
                 } catch (Throwable $exception) {
                     report($exception);
 
@@ -413,15 +418,17 @@ class BuildClientModpackJob implements ShouldQueue
     }
 
     /**
-     * Local copy of a jar of the mods folder, downloaded once per build.
+     * Copy of a jar of the mods folder on the local disk, downloaded once per build.
+     *
+     * @return string path on the local disk
      *
      * @throws Throwable
      */
     protected function localJar(Server $server, ClientModpackService $service, ServerFilesService $files, string $name): string
     {
-        $path = $service->disk()->path($this->tempDirectory.'/mods/'.$name);
+        $path = $this->tempDirectory.'/mods/'.$name;
 
-        if (!is_file($path)) {
+        if (!$service->disk()->exists($path)) {
             $files->download($server, ClientModpackService::MODS_FOLDER.'/'.$name, $path, $service->maxModBytes());
         }
 
@@ -660,7 +667,7 @@ class BuildClientModpackJob implements ShouldQueue
                 break;
             }
 
-            $local = $service->disk()->path($this->tempDirectory.'/files/'.$path);
+            $local = $this->tempDirectory.'/files/'.$path;
 
             try {
                 $files->download($server, $path, $local, $service->maxEmbeddedBytes() - $embeddedBytes);
@@ -672,7 +679,7 @@ class BuildClientModpackJob implements ShouldQueue
                 continue;
             }
 
-            $overrides[$path] = $local;
+            $overrides[$path] = $service->disk()->path($local);
             $taken[strtolower($path)] = true;
             $embeddedBytes += $file['size'];
         }
@@ -681,6 +688,7 @@ class BuildClientModpackJob implements ShouldQueue
     /**
      * Move the built file in place and save the build, then delete the previous one.
      *
+     * @param  string  $tempFile  path on the local disk
      * @param  array<string, mixed>  $attributes
      *
      * @throws Throwable
@@ -691,9 +699,7 @@ class BuildClientModpackJob implements ShouldQueue
         $fileToken = Str::random(40);
         $path = $service->filePath($server, $fileToken);
 
-        $disk->makeDirectory($service->directory($server));
-
-        if (!rename($tempFile, $disk->path($path))) {
+        if (!$disk->move($tempFile, $path)) {
             throw new ClientModpackException(trans('minecraft-client-modpack::strings.errors.store_failed'));
         }
 

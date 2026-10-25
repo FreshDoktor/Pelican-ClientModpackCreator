@@ -69,7 +69,7 @@ class ModJarParser
      */
     protected function parseArchive(string $path): array
     {
-        if (!is_file($path) || !class_exists(ZipArchive::class)) {
+        if (!class_exists(ZipArchive::class)) {
             return [];
         }
 
