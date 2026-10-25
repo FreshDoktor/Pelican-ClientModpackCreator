@@ -1,0 +1,18 @@
+{
+    "id": "minecraft-client-modpack",
+    "name": "Minecraft Client Modpack",
+    "author": "Cedric und FreshDoktor",
+    "version": "1.0.0",
+    "description": "Builds a Modrinth modpack (.mrpack) for the players from the mods on a Minecraft server, without the server-only mods and with extra client mods, and hosts it on the panel",
+    "category": "plugin",
+    "url": "https://github.com/FreshDoktor/Pelican-ClientModpackCreator",
+    "update_url": "https://hub.pelican.dev/plugins/minecraft-client-modpack/update.json",
+    "namespace": "FreshDoktor\\MinecraftClientModpack",
+    "class": "MinecraftClientModpackPlugin",
+    "panels": [
+        "server"
+    ],
+    "panel_version": null,
+    "api_version": 1,
+    "composer_packages": null
+}
