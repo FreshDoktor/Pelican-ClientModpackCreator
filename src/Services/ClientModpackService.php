@@ -389,11 +389,12 @@ class ClientModpackService
         }
     }
 
-    public function forgetBuildStatus(Server $server): void
+    /**
+     * Stop a queued or running build, it notices at its next step. Also clears the error of a failed one.
+     */
+    public function cancelBuild(Server $server): void
     {
-        if (!$this->isBuilding($server)) {
-            Cache::forget($this->statusKey($server->id));
-        }
+        Cache::forget($this->statusKey($server->id));
     }
 
     protected function statusKey(int $serverId): string
