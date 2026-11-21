@@ -9,6 +9,7 @@ A plugin for the [Pelican Panel](https://pelican.dev) that builds a **client mod
 - **Extra client mods**: Add mods from Modrinth that players get on top, e.g. a minimap, shaders or performance mods. Their required dependencies are added too, the version is picked anew for every build
 - **Mods that aren't on Modrinth** (e.g. from CurseForge) are put into the modpack file as they are, or left out if you prefer
 - **Folders and files**: Optionally put folders like `config` into the modpack
+- **Server list**: Optionally add the server to the players' multiplayer list, with its IP or a domain of your choice, so they can join right after installing
 - **Hosted by the panel**: One download link per server that always hands out the latest build, so it can be posted once (e.g. on Discord)
 - **Outdated hint**: The page tells when the mods on the server changed since the last build
 - **Works with or without minecraft-modrinth**: With [minecraft-modrinth](https://github.com/pelican-dev/plugins/tree/main/minecraft-modrinth) by Boy132 enabled, its mods page gets a _Build client modpack_ button. Otherwise the page has its own menu item. No other plugin is required
@@ -63,6 +64,12 @@ _Optional_ mods are in the modpack, but launchers may let players leave them out
 ### Minecraft version and loader
 
 The modpack names the Minecraft version, the loader and its version, launchers install exactly those. They are found out from the server: the loader from the egg's tags, the versions from what is installed in the `libraries` folder, then from the egg's variables (`MINECRAFT_VERSION`, `MC_VERSION`, `LOADER_VERSION`, `FORGE_VERSION`, `NEOFORGE_VERSION`, …) and the mods themselves. If that goes wrong, set them in the settings of the page.
+
+### Server list
+
+With _Add the server to the players' server list_ in the settings, the modpack gets a `servers.dat` with the server in it, so players find it in their multiplayer list right after installing. The address is the one of the server's primary allocation (its alias if it has one, the node's address if it listens on `0.0.0.0`, without the port if it is 25565). The settings fill in the server's name and this address. As long as they are kept, they follow changes of the server; enter a domain or another name if players should see something else.
+
+Launchers copy `servers.dat` into the instance on every install and update of the modpack, so servers players added to that instance themselves may be replaced. A `servers.dat` among the picked folders and files is ignored while this is turned on.
 
 ### Permissions
 

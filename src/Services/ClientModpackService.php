@@ -44,6 +44,8 @@ class ClientModpackService
 
     public const DEFAULT_MAX_EMBEDDED_MB = 200;
 
+    public const DEFAULT_GAME_PORT = 25565;
+
     // A build that hasn't reported progress for this long is treated as dead, e.g. because no queue worker is running.
     protected const STALE_MINUTES = 20;
 
@@ -219,6 +221,62 @@ class ClientModpackService
     public function packName(ClientModpack $pack): string
     {
         return filled($pack->name) ? (string) $pack->name : $pack->server->name;
+    }
+
+    /**
+     * Name of the server in the players' server list, the server's name unless one was set.
+     */
+    public function serverListName(ClientModpack $pack): string
+    {
+        return filled($pack->server_list_name) ? (string) $pack->server_list_name : $pack->server->name;
+    }
+
+    /**
+     * Address players join the server with: the one set, or the one of its primary allocation. Null if there is none.
+     */
+    public function serverListAddress(ClientModpack $pack): ?string
+    {
+        return filled($pack->server_list_address) ? (string) $pack->server_list_address : $this->defaultServerAddress($pack->server);
+    }
+
+    /**
+     * Address of the server's primary allocation, its alias if it has one. An allocation bound to every
+     * interface (0.0.0.0) is reached through the node's address. The port is left out if it is the default one.
+     */
+    public function defaultServerAddress(Server $server): ?string
+    {
+        $allocation = $server->loadMissing('allocation.node')->allocation;
+
+        if ($allocation === null) {
+            return null;
+        }
+
+        $host = $allocation->alias;
+
+        if (in_array($host, ['0.0.0.0', '::'], true)) {
+            $host = (string) $allocation->node->fqdn;
+        }
+
+        if ($host === '') {
+            return null;
+        }
+
+        $host = str_contains($host, ':') && !str_starts_with($host, '[') ? "[$host]" : $host;
+
+        return (int) $allocation->port === self::DEFAULT_GAME_PORT ? $host : "$host:{$allocation->port}";
+    }
+
+    /**
+     * Whether $address is something players can type into "Server Address": a host name, IPv4 or
+     * [IPv6] address, optionally with a port.
+     */
+    public static function isValidServerAddress(string $address): bool
+    {
+        if (!preg_match('/^(?<host>\[[0-9A-Fa-f:.]+\]|[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?)(:(?<port>\d{1,5}))?$/', $address, $matches)) {
+            return false;
+        }
+
+        return blank($matches['port'] ?? null) || ((int) $matches['port'] >= 1 && (int) $matches['port'] <= 65535);
     }
 
     /**

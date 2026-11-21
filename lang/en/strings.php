@@ -164,6 +164,13 @@ return [
         'embed_unknown_helper' => 'Mods uploaded by hand (e.g. from CurseForge) are put into the modpack file as they are. Only share the modpack with your players, many mod licenses don\'t allow publishing them.',
         'include_paths' => 'Also put these folders and files into the modpack',
         'include_paths_helper' => 'Relative to the server folder, e.g. config. Players get them as they are on the server, so don\'t add anything with passwords or tokens in it.',
+        'server_list' => 'Server list',
+        'server_list_description' => 'Players find the server in their multiplayer list right after installing the modpack.',
+        'server_list_toggle' => 'Add the server to the players\' server list',
+        'server_list_name' => 'Name in the server list',
+        'server_list_address' => 'Address',
+        'server_list_address_helper' => 'IP or domain players join with, with :port if it isn\'t 25565. Name and address of the server are filled in, as long as you keep them they follow changes of the server. Launchers write the list on every install and update of the modpack, servers players added to that instance themselves may be lost.',
+        'server_list_address_invalid' => 'Enter an IP or domain, optionally with :port, e.g. play.example.com or 203.0.113.5:25566.',
     ],
 
     'reset_link' => [
@@ -209,6 +216,7 @@ return [
         'extra_missing' => 'The client mod :name doesn\'t exist on Modrinth anymore.',
         'extra_no_version' => 'The client mod :name has no version for Minecraft :minecraft with :loader and was left out.',
         'latest_loader' => 'The :loader version of the server couldn\'t be found out, the modpack uses the newest one (:version). Set it in the settings if players can\'t join.',
+        'server_list_no_address' => 'The server has no address to put into the server list. Enter one in the settings.',
     ],
 
     'plugin_settings' => [

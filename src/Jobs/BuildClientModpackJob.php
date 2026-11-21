@@ -14,6 +14,7 @@ use FreshDoktor\MinecraftClientModpack\Services\ModrinthApi;
 use FreshDoktor\MinecraftClientModpack\Services\MrpackWriter;
 use FreshDoktor\MinecraftClientModpack\Services\ServerEnvironmentService;
 use FreshDoktor\MinecraftClientModpack\Services\ServerFilesService;
+use FreshDoktor\MinecraftClientModpack\Services\ServerListWriter;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -35,8 +36,9 @@ use Throwable;
  *  4. decide for every mod whether players need it (ModClassifier), mods on Modrinth go into the index,
  *     the others are put into the pack as they are
  *  5. add the extra client mods and what they depend on
- *  6. add the folders that were picked to go into the pack (e.g. config)
- *  7. write the .mrpack and swap it in for the previous build
+ *  6. put the server into the players' server list (servers.dat), if that is turned on
+ *  7. add the folders that were picked to go into the pack (e.g. config)
+ *  8. write the .mrpack and swap it in for the previous build
  *
  * Reading every jar off the daemon takes far longer than a web request may run, so this always runs
  * on the queue.
@@ -314,14 +316,17 @@ class BuildClientModpackJob implements ShouldQueue
         // 5. Extra client mods.
         $rows = [...$rows, ...$this->resolveExtraMods($pack, $service, $modrinth, $classifier, $loader, $minecraftVersion, $knownProjects, $indexFiles)];
 
-        // 6. Folders and files that go into the pack as they are.
+        // 6. The server list. Before the picked files, so a servers.dat among them doesn't replace it.
+        $this->addServerList($pack, $service, $overrides);
+
+        // 7. Folders and files that go into the pack as they are.
         $this->collectIncludedFiles($server, $pack, $service, $files, $indexFiles, $overrides, $embeddedBytes);
 
         if ($indexFiles === [] && $overrides === []) {
             throw new ClientModpackException(trans('minecraft-client-modpack::strings.errors.empty'));
         }
 
-        // 7. Write the pack.
+        // 8. Write the pack.
         $this->progress($service, 'writing');
 
         $name = $service->packName($pack);
@@ -501,7 +506,6 @@ class BuildClientModpackJob implements ShouldQueue
                 if ($project !== null) {
                     $knownProjects[$project['id']] = true;
 
-
                     $version = $item['version_id'] !== null
                         ? $modrinth->getVersion($item['version_id'])
                         : $modrinth->pickVersion($modrinth->getCompatibleVersions($project['id'], $loaders, $minecraftVersion));
@@ -592,6 +596,40 @@ class BuildClientModpackJob implements ShouldQueue
             'size' => $size,
             'required_by' => $item['required_by'],
         ];
+    }
+
+    /**
+     * Put a servers.dat with the server in it into the pack, so players find it in their multiplayer
+     * list right away.
+     *
+     * @param  array<string, string>  $overrides
+     *
+     * @throws Throwable
+     */
+    protected function addServerList(ClientModpack $pack, ClientModpackService $service, array &$overrides): void
+    {
+        if (!$pack->server_list) {
+            return;
+        }
+
+        $address = $service->serverListAddress($pack);
+
+        if ($address === null) {
+            $this->warn('server_list_no_address');
+
+            return;
+        }
+
+        $path = $this->tempDirectory.'/'.ServerListWriter::FILE;
+        $contents = app(ServerListWriter::class)->encode([
+            ['name' => $service->serverListName($pack), 'ip' => $address],
+        ]);
+
+        if (!$service->disk()->put($path, $contents)) {
+            throw new ClientModpackException(trans('minecraft-client-modpack::strings.errors.store_failed'));
+        }
+
+        $overrides[ServerListWriter::FILE] = $service->disk()->path($path);
     }
 
     /**

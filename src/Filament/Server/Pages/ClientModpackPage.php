@@ -5,6 +5,7 @@ namespace FreshDoktor\MinecraftClientModpack\Filament\Server\Pages;
 use App\Facades\Activity;
 use App\Models\Server;
 use App\Traits\Filament\BlockAccessInConflict;
+use Closure;
 use Exception;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -824,6 +825,10 @@ class ClientModpackPage extends Page implements HasTable
                     'loader_version' => $pack?->loader_version,
                     'embed_unknown' => $pack?->embed_unknown ?? true,
                     'include_paths' => $pack?->include_paths ?? [],
+                    'server_list' => $pack?->server_list ?? false,
+                    // The server's own name and address unless others were set.
+                    'server_list_name' => filled($pack?->server_list_name) ? $pack->server_list_name : $this->getServer()->name,
+                    'server_list_address' => filled($pack?->server_list_address) ? $pack->server_list_address : $this->service()->defaultServerAddress($this->getServer()),
                 ];
             })
             ->schema([
@@ -875,6 +880,33 @@ class ClientModpackPage extends Page implements HasTable
                     ->placeholder('config')
                     ->suggestions(['config', 'defaultconfigs', 'kubejs', 'resourcepacks', 'shaderpacks', 'options.txt'])
                     ->visible(fn () => $this->userCan('file.read-content')),
+                Section::make(trans('minecraft-client-modpack::strings.settings.server_list'))
+                    ->description(trans('minecraft-client-modpack::strings.settings.server_list_description'))
+                    ->compact()
+                    ->schema([
+                        Toggle::make('server_list')
+                            ->label(trans('minecraft-client-modpack::strings.settings.server_list_toggle'))
+                            ->live(),
+                        Grid::make(['default' => 1, 'md' => 2])
+                            ->visible(fn (Get $get) => (bool) $get('server_list'))
+                            ->schema([
+                                TextInput::make('server_list_name')
+                                    ->label(trans('minecraft-client-modpack::strings.settings.server_list_name'))
+                                    ->placeholder(fn () => $this->getServer()->name)
+                                    ->maxLength(64),
+                                TextInput::make('server_list_address')
+                                    ->label(trans('minecraft-client-modpack::strings.settings.server_list_address'))
+                                    ->placeholder(fn () => $this->service()->defaultServerAddress($this->getServer()) ?? 'play.example.com')
+                                    ->helperText(trans('minecraft-client-modpack::strings.settings.server_list_address_helper'))
+                                    ->required(fn () => $this->service()->defaultServerAddress($this->getServer()) === null)
+                                    ->rule(fn () => function (string $attribute, mixed $value, Closure $fail) {
+                                        if (filled($value) && !ClientModpackService::isValidServerAddress(trim((string) $value))) {
+                                            $fail(trans('minecraft-client-modpack::strings.settings.server_list_address_invalid'));
+                                        }
+                                    })
+                                    ->maxLength(255),
+                            ]),
+                    ]),
             ])
             ->action(function (array $data) {
                 $pack = $this->getOrCreatePack();
@@ -887,7 +919,18 @@ class ClientModpackPage extends Page implements HasTable
                     'loader' => in_array($data['loader'] ?? null, ClientModpackService::LOADERS, true) ? $data['loader'] : null,
                     'loader_version' => filled($data['loader_version'] ?? null) ? trim((string) $data['loader_version']) : null,
                     'embed_unknown' => (bool) ($data['embed_unknown'] ?? true),
+                    'server_list' => (bool) ($data['server_list'] ?? false),
                 ];
+
+                // Hidden while the toggle is off, then the stored values are kept for turning it on again.
+                if ($attributes['server_list']) {
+                    $name = trim((string) ($data['server_list_name'] ?? ''));
+                    $address = trim((string) ($data['server_list_address'] ?? ''));
+
+                    // The prefilled server values are stored as empty, so they follow when the server's name or allocation changes.
+                    $attributes['server_list_name'] = $name !== '' && $name !== $this->getServer()->name ? $name : null;
+                    $attributes['server_list_address'] = $address !== '' && $address !== $this->service()->defaultServerAddress($this->getServer()) && ClientModpackService::isValidServerAddress($address) ? $address : null;
+                }
 
                 $invalid = [];
 

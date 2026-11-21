@@ -28,6 +28,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property ?array<int, string> $include_paths
  * @property ?array<string, string> $mod_rules rule by rule key, see ClientModpackService::ruleKey()
  * @property ?array<int, ExtraMod> $extra_mods
+ * @property bool $server_list
+ * @property ?string $server_list_name
+ * @property ?string $server_list_address
  * @property ?string $file_token
  * @property ?string $file_name
  * @property ?int $size
@@ -64,6 +67,9 @@ class ClientModpack extends Model
         'include_paths',
         'mod_rules',
         'extra_mods',
+        'server_list',
+        'server_list_name',
+        'server_list_address',
         'file_token',
         'file_name',
         'size',
@@ -82,6 +88,7 @@ class ClientModpack extends Model
 
     protected $attributes = [
         'embed_unknown' => true,
+        'server_list' => false,
     ];
 
     protected function casts(): array
@@ -91,6 +98,7 @@ class ClientModpack extends Model
             'include_paths' => 'array',
             'mod_rules' => 'array',
             'extra_mods' => 'array',
+            'server_list' => 'boolean',
             'size' => 'integer',
             'contents' => 'array',
             'warnings' => 'array',

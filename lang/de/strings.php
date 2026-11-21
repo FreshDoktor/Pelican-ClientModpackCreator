@@ -164,6 +164,13 @@ return [
         'embed_unknown_helper' => 'Von Hand hochgeladene Mods (z. B. von CurseForge) kommen so, wie sie sind, in die Modpack-Datei. Teile das Modpack nur mit deinen Spielern, viele Mod-Lizenzen erlauben keine Veröffentlichung.',
         'include_paths' => 'Diese Ordner und Dateien auch ins Modpack packen',
         'include_paths_helper' => 'Relativ zum Serverordner, z. B. config. Spieler bekommen sie so, wie sie auf dem Server liegen, füge also nichts mit Passwörtern oder Tokens hinzu.',
+        'server_list' => 'Serverliste',
+        'server_list_description' => 'Spieler finden den Server direkt nach der Installation des Modpacks in ihrer Mehrspieler-Liste.',
+        'server_list_toggle' => 'Server in die Serverliste der Spieler eintragen',
+        'server_list_name' => 'Name in der Serverliste',
+        'server_list_address' => 'Adresse',
+        'server_list_address_helper' => 'IP oder Domain, mit der Spieler joinen, mit :Port, falls er nicht 25565 ist. Name und Adresse des Servers sind vorausgefüllt, solange du sie so lässt, folgen sie Änderungen am Server. Launcher schreiben die Liste bei jeder Installation und jedem Update des Modpacks, selbst eingetragene Server der Spieler in dieser Instanz können dabei verloren gehen.',
+        'server_list_address_invalid' => 'Gib eine IP oder Domain ein, optional mit :Port, z. B. play.example.com oder 203.0.113.5:25566.',
     ],
 
     'reset_link' => [
@@ -209,6 +216,7 @@ return [
         'extra_missing' => 'Die Client-Mod :name gibt es auf Modrinth nicht mehr.',
         'extra_no_version' => 'Die Client-Mod :name hat keine Version für Minecraft :minecraft mit :loader und wurde weggelassen.',
         'latest_loader' => 'Die :loader-Version des Servers konnte nicht ermittelt werden, das Modpack nutzt die neueste (:version). Trage sie in den Einstellungen ein, falls Spieler nicht joinen können.',
+        'server_list_no_address' => 'Der Server hat keine Adresse für die Serverliste. Trage eine in den Einstellungen ein.',
     ],
 
     'plugin_settings' => [
