@@ -1,0 +1,73 @@
+# Packs the plugin for a pushed tag (1.2.0 or v1.2.0) and publishes a GitHub release with
+# minecraft-client-modpack.zip, to import in the panel under Plugins. The zip holds only the files
+# the plugin needs, at its root: nothing of git, GitHub, the IDE or other tooling.
+name: Release
+
+on:
+  push:
+    tags: ["*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      # Pinned to a commit (the tag as comment): a moved tag can't change what builds the release.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - name: Check plugin.json
+        run: |
+          version="$(jq -r .version plugin.json)"
+          if [ "${GITHUB_REF_NAME#v}" != "$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match the version $version in plugin.json"
+            exit 1
+          fi
+
+          # The panel writes a meta block on install, it must not be shipped.
+          if jq -e 'has("meta")' plugin.json > /dev/null; then
+            echo "::error::plugin.json contains a meta block, remove it before releasing"
+            exit 1
+          fi
+
+      - name: Pack the plugin
+        run: |
+          zip="$(jq -r .id plugin.json).zip"
+          echo "ZIP=$zip" >> "$GITHUB_ENV"
+
+          # Only these go into the zip, taken from the tagged commit (untracked files never get in).
+          include=(plugin.json LICENSE README.md config database lang resources src)
+          paths=()
+          for path in "${include[@]}"; do
+            if git cat-file -e "HEAD:$path" 2> /dev/null; then
+              paths+=("$path")
+            fi
+          done
+
+          git archive --format=zip -o "$zip" HEAD -- "${paths[@]}"
+
+      - name: Check the zip
+        run: |
+          unzip -Z1 "$ZIP" | tee files.txt
+
+          if ! grep -qx plugin.json files.txt; then
+            echo "::error::plugin.json is not at the root of the zip"
+            exit 1
+          fi
+
+          # Hidden files and folders (.git, .github, .idea, .gitignore, ...) don't belong into it.
+          if grep -E '(^|/)\.' files.txt; then
+            echo "::error::The zip contains hidden files"
+            exit 1
+          fi
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$ZIP" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$ZIP" --verify-tag --title "Minecraft Client Modpack ${GITHUB_REF_NAME#v}" --generate-notes
+          fi

@@ -25,7 +25,7 @@ A plugin for the [Pelican Panel](https://pelican.dev) that builds a **client mod
 
 ## Installation
 
-Copy the plugin into the `plugins` folder of your panel, the folder has to be named like the plugin id (`minecraft-client-modpack`), or import `minecraft-client-modpack.zip` in the admin area under _Plugins_. Then install and enable it there. Installing creates the table `minecraft_client_modpacks`.
+Copy the plugin into the `plugins` folder of your panel, the folder has to be named like the plugin id (`minecraft-client-modpack`), or import `minecraft-client-modpack.zip` from the [latest release](https://github.com/FreshDoktor/Pelican-ClientModpackCreator/releases/latest) in the admin area under _Plugins_. Then install and enable it there. Installing creates the table `minecraft_client_modpacks`.
 
 **Restart the queue worker** afterwards, and after every update of the plugin. The worker is a long-running process that only knows the code it was started with, until then builds stay at _Waiting for the queue…_ or fail:
 
